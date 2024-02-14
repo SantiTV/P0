@@ -1,83 +1,78 @@
-def revisar_sintaxis(codigo):
-    
-    ##Iniciamos el estado como False
-    sintaxis = False
-    
+"""
+Link del modulo: https://docs.python.org/es/3/library/re.html
 
+"""
+
+import re
+
+def revisar_sintaxis(codigo):
 
     ## lista constantes
-    comandos = {"defvar", "defun", "if", "loop","repeat","move", "skip", "turn", "face",
-                 "put", "pick", "move-dir", "run-dirs", "move-face","null"} 
     
-    caracteres = {" ","(",")","\n","\t"}
+    comandos = r'\((=|move|skip|turn|face|put|pick|move-dir|run-dirs|move-face|null)\s+(.*?)\)'
+    funcion = r'\((defun)\s+(\w+)\s+([a-zA-Z]+|\d+)\)'
+    estructuras = r'\((if|loop|repeat|defun)\s+(.*?)\)'
+    llamar_funciones = r'\((.?)\s+(.?)\)'
+    condiciones = r'\((facing\?|blocked\?|can-put\?|can-pick\?|can-move\?|isZero\?|not)\s+(.*?)\)'    
+    variable = r'\((defvar)\s+(\w+)\s+(\w+)+|\d+\)'
+    constantes = r'\((=|Dim|myXpos|myChips|myYpos|myBalloons|balloonsHere|ChipsHere|Spaces)\b'
+   
 
-    direcciones = {"left", "right", "back", "north", "south","west", "front","east"}
-    
-    condiciones = {"facing?", "blocked?", "can-put?", "can-pick", "can-move?", "isZero","not"}
+    ##funcion =  r'\((defun)\s+(\w+)\s*\(([^)]*)\)\s*(.*?)\)'
+    ##direcciones = {"left", "right", "back", "north", "south","west", "front","east"}
 
-    constantes = {"Dim", "myXpos", "myChips", "myYpos", "myBalloons", "balloonsHere", "ChipsHere", "Spaces"}
+    listaTokens = []
     
-    
-    
-    funciones= []
-    parametros = []
-    
-    parentesis = 0
-    
-    for expReg in codigo:
-    
-        ##Revisar parentesis 
-        if expReg == '(':
-            parentesis += 1
-            
-        elif  expReg == ')':
-            parentesis -= 1
+    expRegular = re.findall(r'\((.*?)\)', codigo)
 
-        ##Verificar funciones
-            
-        defun_indices = [ i for i, expReg in enumerate(codigo) if expReg == 'defun']
-
-        #if expReg == 'defun':
-         #   if codigo.index(expReg) + 1 < len (codigo):
-                #nombre = codigo[codigo.index(expReg) + 1] ##Nombre de la funcion
-                #parametro = expReg[2:1] #Parametros de la funcion
-                #funciones.append(nombre) ##Guarda el niombre en una lista
-
-    for index in defun_indices:
-        nombre = codigo[index +1] 
-        if codigo[index+3] != ")" :
-            parametros.append(codigo[index + 3])
-            parametros.append(codigo[index+4])
+    
+    for tipo in expRegular:
         
         
-        funciones.append(nombre)      
+        if re.match(comandos,tipo):
+            listaTokens.append(("comando", tipo))
+            continue
+        elif re.match(funcion,tipo):
+            listaTokens.append(("funcion", tipo))
+            continue
+        elif re.match(estructuras,tipo):
+            listaTokens.append(("estructura", tipo))
+            continue
+        elif re.match(llamar_funciones,tipo):
+            listaTokens.append(("llamar_funcion", tipo))
+            continue
+        elif re.match(condiciones,tipo):
+            listaTokens.append(("condicion", tipo))
+            continue        
+        elif re.match(variable,tipo):
+            listaTokens.append(("variable", tipo))
+            continue
+        elif re.match(constantes,tipo):
+            listaTokens.append(("constante", tipo))
+            continue
+        else:
+            return "no"
 
-    
-    
-    ##Revisar parentesis y asegurar que si hay (, existe un )
-    if parentesis != 0: 
-        sintaxis =  False          
-    
-    
-    print(funciones)
-    print(parametros)
-    
 
+
+    print(listaTokens)
+    return "yes"
+           
+    
+    
+            
 def  main():
     with open("archivo.txt", 'r') as archivo:
         codigo = archivo.read()
 
+        ## Remover 
+        codigo = re.sub(r'\s+', '', codigo)
+
         ## poner en miniuscula el codigo no es case sensitive
         codigo = codigo.lower() 
 
-        ## Guarda las palabras en una lista
-        espacios =  codigo.replace('(', ' ( ').replace(')',' ) ').replace("\n","").replace("\t","").split()
-        
         ## Llama la funcion revisar_sintaxis
-        sintaxis = revisar_sintaxis(espacios)
-
- 
-    
-    
+        sintaxis = revisar_sintaxis(codigo)
+        print(sintaxis)
     
 main()
